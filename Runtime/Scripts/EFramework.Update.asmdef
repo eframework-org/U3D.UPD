@@ -1,0 +1,17 @@
+{
+    "name": "EFramework.Update",
+    "rootNamespace": "",
+    "references": [
+        "EFramework.Utility",
+        "EFramework.Editor"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

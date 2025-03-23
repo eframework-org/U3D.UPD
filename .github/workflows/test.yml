@@ -1,0 +1,136 @@
+name: 单元测试
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    outputs:
+      test_passed:
+        description: "测试是否通过"
+        value: ${{ jobs.test.outputs.passed }}
+    secrets:
+      UNITY_LICENSE:
+        required: true
+      UNITY_EMAIL:
+        required: true
+      UNITY_PASSWORD:
+        required: true
+
+permissions:
+  checks: write
+  contents: read
+  actions: read
+  security-events: write
+
+jobs:
+  test:
+    name: 测试 ${{ matrix.testMode }} 环境
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        projectPath:
+          - Package
+        unityVersion: [6000.0.32f1]
+        testMode: [PlayMode]
+    outputs:
+      passed: ${{ steps.tests.conclusion == 'success' }}
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          path: Package
+
+      - name: 准备镜像
+        run: |
+          # 创建启动脚本
+          cat > entrypoint.sh << 'EOF'
+          #!/bin/bash
+          # 启动 MinIO 服务
+          nohup minio server /minio/data --console-address ":9090" --address ":9000" > /minio/minio.log 2>&1 &
+
+          echo "等待 MinIO 服务启动..."
+          max_retries=30
+          retry_interval=2
+          retry_count=0
+
+          until curl -s --head http://localhost:9000/minio/health/ready || [ $retry_count -eq $max_retries ]; do
+            echo "等待 MinIO 服务就绪... (尝试 $retry_count/$max_retries)"
+            sleep $retry_interval
+            retry_count=$((retry_count+1))
+          done
+
+          if [ $retry_count -eq $max_retries ]; then
+            echo "MinIO 服务启动超时"
+            exit 1
+          fi
+
+          echo "MinIO 服务已就绪"
+
+          mc alias set myminio http://localhost:9000 admin adminadmin
+          mc mb myminio/default || true
+          mc anonymous set public myminio/default
+          echo "MinIO 存储已就绪"
+
+          # 执行传入的命令
+          exec "$@"
+          EOF
+          chmod +x entrypoint.sh
+
+          # 创建 Dockerfile
+          cat > Dockerfile << EOF
+          FROM unityci/editor:ubuntu-${{ matrix.unityVersion }}-linux-il2cpp-3
+
+          # 安装 MinIO 依赖
+          RUN apt-get update && \\
+              apt-get install -y curl ca-certificates && \\
+              rm -rf /var/lib/apt/lists/* && \\
+              mkdir -p /minio/data && \\
+              curl -fsSL https://dl.min.io/server/minio/release/linux-amd64/minio -o /usr/local/bin/minio && \\
+              curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc && \\
+              chmod +x /usr/local/bin/minio /usr/local/bin/mc
+
+          # 设置 MinIO 环境
+          ENV MINIO_ACCESS_KEY=admin
+          ENV MINIO_SECRET_KEY=adminadmin
+
+          # 复制启动脚本
+          COPY entrypoint.sh /usr/local/bin/
+          RUN chmod +x /usr/local/bin/entrypoint.sh
+
+          # 设置镜像入口
+          ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+          EOF
+
+          # 构建镜像
+          docker build -t unity-editor-ubuntu-linux-il2cpp-3:${{ matrix.unityVersion }} .
+          docker images | grep unity-editor-ubuntu-linux-il2cpp-3
+
+      - name: 运行测试
+        uses: game-ci/unity-test-runner@v4
+        id: tests
+        env:
+          TZ: 'Asia/Shanghai'
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          packageMode: true
+          projectPath: ${{ matrix.projectPath }}
+          unityVersion: ${{ matrix.unityVersion }}
+          scopedRegistryUrl: https://registry.npmjs.org/
+          registryScopes: 'et, ep'
+          testMode: ${{ matrix.testMode }}
+          artifactsPath: Results
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: 测试 ${{ matrix.testMode }} 报告
+          customImage: unity-editor-ubuntu-linux-il2cpp-3:${{ matrix.unityVersion }}
+
+      - name: 上传报告
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Test.${{ matrix.testMode }}.Reports
+          path: ${{ steps.tests.outputs.artifactsPath }}
+          retention-days: 14
