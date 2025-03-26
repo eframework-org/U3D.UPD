@@ -65,7 +65,7 @@ namespace EFramework.Update
         /// </code>
         /// 更多信息请参考模块文档。
         /// </remarks>
-        public class Prefs : XPrefs.IPanel
+        public class Prefs : XPrefs.Panel
         {
             /// <summary>
             /// 当前版本号的配置键。
