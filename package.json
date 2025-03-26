@@ -1,7 +1,7 @@
 {
   "name": "org.eframework.u3d.upd",
-  "displayName": "EFramework Update",
-  "description": "U3D.UPD 提供了一套完整的资源更新解决方案，包含补丁包和安装包的更新管理功能，通过业务处理接口控制更新流程，并采用事件机制驱动状态更新。",
+  "displayName": "EFramework Update for Unity",
+  "description": "EFramework Update for Unity 提供了一套完整的资源更新解决方案，包含补丁包和安装包的更新管理功能，通过业务处理接口控制更新流程，并采用事件机制驱动状态更新。",
   "version": "0.0.1",
   "unity": "2021.3",
   "license": "MIT",
