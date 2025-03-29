@@ -1,19 +1,11 @@
 {
     "name": "EFramework.Update.Tests",
-    "rootNamespace": "",
     "references": [
-        "UnityEngine.TestRunner",
         "EFramework.Utility",
         "EFramework.Editor",
         "EFramework.Update"
     ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": true,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
 }
