@@ -46,7 +46,7 @@ XUpdate.Prefs 管理更新系统的配置项，支持运行时读取和编辑器
 | 访问密钥 | `Update/Patch/Publish/Access@Editor` | `${Env.OssAccess}` | - 补丁发布服务器的访问密钥<br>- 仅在编辑器环境下可用 |
 | 秘密密钥 | `Update/Patch/Publish/Secret@Editor` | `${Env.OssSecret}` | - 补丁发布服务器的秘密密钥<br>- 仅在编辑器环境下可用 |
 
-以上配置项均可在 `EFramework/Preferences/Update` 首选项编辑器中进行可视化配置。
+以上配置项均可在 `Tools/EFramework/Preferences/Update` 首选项编辑器中进行可视化配置。
 
 ## 常见问题
 
