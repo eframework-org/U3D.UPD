@@ -2,6 +2,7 @@
 
 [![Version](https://img.shields.io/npm/v/org.eframework.u3d.upd)](https://www.npmjs.com/package/org.eframework.u3d.upd)
 [![Downloads](https://img.shields.io/npm/dm/org.eframework.u3d.upd)](https://www.npmjs.com/package/org.eframework.u3d.upd)
+[![DeepWiki](https://img.shields.io/badge/DeepWiki-Explore-blue)](https://deepwiki.com/eframework-org/U3D.UPD)
 
 EFramework Update for Unity 提供了一套完整的资源更新解决方案，包含补丁包和安装包的更新管理功能，通过业务处理接口控制更新流程，并采用事件机制驱动状态更新。
 

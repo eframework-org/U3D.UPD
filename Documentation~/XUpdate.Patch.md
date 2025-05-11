@@ -1,7 +1,8 @@
 # XUpdate.Patch
 
-[![Version](https://img.shields.io/npm/v/org.eframework.u3d.upd.patch)](https://www.npmjs.com/package/org.eframework.u3d.upd.patch)
-[![Downloads](https://img.shields.io/npm/dm/org.eframework.u3d.upd.patch)](https://www.npmjs.com/package/org.eframework.u3d.upd.patch)
+[![Version](https://img.shields.io/npm/v/org.eframework.u3d.upd)](https://www.npmjs.com/package/org.eframework.u3d.upd)
+[![Downloads](https://img.shields.io/npm/dm/org.eframework.u3d.upd)](https://www.npmjs.com/package/org.eframework.u3d.upd)
+[![DeepWiki](https://img.shields.io/badge/DeepWiki-Explore-blue)](https://deepwiki.com/eframework-org/U3D.UPD)
 
 XUpdate.Patch 实现了补丁包的提取、校验和下载功能，采用并发任务提升更新效率。
 

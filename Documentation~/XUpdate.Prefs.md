@@ -1,7 +1,8 @@
 # XUpdate.Prefs
 
-[![Version](https://img.shields.io/npm/v/org.eframework.u3d.upd.prefs)](https://www.npmjs.com/package/org.eframework.u3d.upd.prefs)
-[![Downloads](https://img.shields.io/npm/dm/org.eframework.u3d.upd.prefs)](https://www.npmjs.com/package/org.eframework.u3d.upd.prefs)
+[![Version](https://img.shields.io/npm/v/org.eframework.u3d.upd)](https://www.npmjs.com/package/org.eframework.u3d.upd)
+[![Downloads](https://img.shields.io/npm/dm/org.eframework.u3d.upd)](https://www.npmjs.com/package/org.eframework.u3d.upd)
+[![DeepWiki](https://img.shields.io/badge/DeepWiki-Explore-blue)](https://deepwiki.com/eframework-org/U3D.UPD)
 
 XUpdate.Prefs 管理更新系统的配置项，支持运行时读取和编辑器可视化配置。
 
