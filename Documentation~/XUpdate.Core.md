@@ -42,8 +42,8 @@ public class MyHandler : XUpdate.IHandler
         {
             var patcher = new XUpdate.Patch(
                 "StreamingAssets/Patch.zip",  // 内置地址
-                "Local/Patch/Manifest.md5",              // 本地地址
-                "https://example.com/Patch/Manifest.md5"  // 远端地址
+                "Local/Patch/Manifest.db",              // 本地地址
+                "https://example.com/Patch/Manifest.db"  // 远端地址
             );
             patches.Add(patcher);
         }
