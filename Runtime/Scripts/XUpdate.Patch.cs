@@ -588,7 +588,7 @@ namespace EFramework.Update
                 var total = downloads.Count;
                 var reqs = new Dictionary<XMani.FileInfo, UnityWebRequest>();
                 var times = new Dictionary<XMani.FileInfo, long>();
-                var succeed = new List<XMani.FileInfo>();
+                var succeeded = new List<XMani.FileInfo>();
                 var csize = (long)(Size(Phase.Download) * Progress(Phase.Download));
                 var lsize = csize;
                 var ptime = 0f;
@@ -597,7 +597,7 @@ namespace EFramework.Update
                     long tsize = csize;
                     try
                     {
-                        succeed.Clear();
+                        succeeded.Clear();
                         foreach (var kvp in reqs)
                         {
                             var fi = kvp.Key;
@@ -612,7 +612,7 @@ namespace EFramework.Update
                                 else
                                 {
                                     done++;
-                                    succeed.Add(fi);
+                                    succeeded.Add(fi);
                                     csize += fi.Size;
                                     tsize += fi.Size;
                                     var file = Path.Join(localRoot, fi.Name);
@@ -645,9 +645,9 @@ namespace EFramework.Update
                             }
                         }
 
-                        if (succeed.Count > 0)
+                        if (succeeded.Count > 0)
                         {
-                            foreach (var key in succeed)
+                            foreach (var key in succeeded)
                             {
                                 var req = reqs[key];
                                 reqs.Remove(key);
