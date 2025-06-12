@@ -25,8 +25,8 @@
     "update"
   ],
   "dependencies": {
-    "org.eframework.u3d.util": "0.0.9",
-    "org.eframework.u3d.edit": "0.1.1"
+    "org.eframework.u3d.util": "0.1.0",
+    "org.eframework.u3d.edit": "0.1.2"
   },
   "puerExports": [
     "EFramework.Update"
