@@ -221,10 +221,8 @@ public class TestXUpdateCore
                 LogAssert.Expect(LogType.Log, "MyPatch.Cleanup Success");
             }
 
-            var originVersion = XPrefs.Local.GetString(Prefs.Version);
             yield return XUpdate.Process(handler);
 
-            Assert.AreEqual("1.1.0", XPrefs.Local.GetString(Prefs.Version), "版本号应当更新为1.1.0");
             Assert.IsTrue(isUpdateStart, "更新开始事件应当被触发");
             Assert.IsTrue(isUpdateFinish, "更新完成事件应当被触发");
             Assert.AreNotEqual(isBinary, isPatchUpdateStart, "补丁更新开始事件是否触发应当与isBinary相反");
@@ -246,10 +244,6 @@ public class TestXUpdateCore
                 Assert.IsTrue(isPatchDownloadSucceed, "补丁下载成功事件应当被触发");
                 Assert.IsFalse(isPatchDownloadFailed, "补丁下载失败事件应当不被触发");
             }
-
-            // 恢复版本号
-            XPrefs.Local.Set(Prefs.Version, originVersion);
-            XPrefs.Local.Save();
         }
     }
 

@@ -436,8 +436,6 @@ namespace EFramework.Update
                     }
                 }
 
-                XPrefs.Local.Set(Prefs.Version, version);
-                XPrefs.Local.Save();
                 Event.Notify(EventType.OnUpdateFinish);
                 XLog.Notice("XUpdate.Process: finish to process update binary: {0}, patch: {1}.", binary, patch);
             }
