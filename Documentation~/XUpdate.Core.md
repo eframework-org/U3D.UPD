@@ -30,10 +30,9 @@ public class MyHandler : XUpdate.IHandler
     public List<XUpdate.Patch> Patches => patches;
     
     // 检查更新
-    public bool OnCheck(out string version, out bool binary, out bool patch)
+    public bool OnCheck(out bool binary, out bool patch)
     {
         // 实现版本检查逻辑，例如：
-        version = "1.0.0";
         binary = false;  // 是否进行安装包更新
         patch = true;    // 是否进行补丁包更新
         
@@ -52,7 +51,7 @@ public class MyHandler : XUpdate.IHandler
     }
     
     // 处理重试逻辑
-    public bool OnRetry(XUpdate.Phase phase, XUpdate.Patch patcher, int count, out float wait)
+    public bool OnRetry(XUpdate.Phase phase, XUpdate.IWorker worker, int count, out float wait)
     {
         // 实现重试逻辑，例如：
         wait = 1.0f;  // 重试等待时间（秒）

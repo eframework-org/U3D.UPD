@@ -58,24 +58,23 @@ public class TestXUpdateCore
             }
         }
 
-        bool IHandler.OnCheck(out string version, out bool binary, out bool patch)
+        bool IHandler.OnCheck(out bool binary, out bool patch)
         {
-            version = "1.1.0";
             binary = IsBinary;
             patch = !IsBinary;
             return CheckResult;
         }
 
-        bool IHandler.OnRetry(Phase phase, Patch patcher, int count, out float wait)
+        bool IHandler.OnRetry(Phase phase, IWorker worker, int count, out float wait)
         {
             wait = 0.1f;
             if (EndOnError) return false;
             if (count > 3)
             {
-                patcher.Error = string.Empty;
-                if (phase == Phase.Preprocess) (patcher as MyPatch).ErrorOnPreprocess = false;
-                else if (phase == Phase.Process) (patcher as MyPatch).ErrorOnProcess = false;
-                else if (phase == Phase.Postprocess) (patcher as MyPatch).ErrorOnPostprocess = false;
+                worker.Error = string.Empty;
+                if (phase == Phase.Preprocess) (worker as MyPatch).ErrorOnPreprocess = false;
+                else if (phase == Phase.Process) (worker as MyPatch).ErrorOnProcess = false;
+                else if (phase == Phase.Postprocess) (worker as MyPatch).ErrorOnPostprocess = false;
                 return true;
             }
             RetriedCount++;
@@ -151,7 +150,7 @@ public class TestXUpdateCore
             return () => true;
         }
 
-        public override IEnumerator Preprocess(bool remote)
+        public override IEnumerator Preprocess()
         {
             if (ErrorOnPreprocess) Error = "Preprocess error";
             yield return Extract();
@@ -225,24 +224,24 @@ public class TestXUpdateCore
 
             Assert.IsTrue(isUpdateStart, "更新开始事件应当被触发");
             Assert.IsTrue(isUpdateFinish, "更新完成事件应当被触发");
-            Assert.AreNotEqual(isBinary, isPatchUpdateStart, "补丁更新开始事件是否触发应当与isBinary相反");
-            Assert.AreNotEqual(isBinary, isPatchUpdateFinish, "补丁更新完成事件是否触发应当与isBinary相反");
-            Assert.AreEqual(isBinary, isBinaryUpdateStart, "包更新开始是否触发应当与isBinary一致");
-            Assert.AreEqual(isBinary, isBinaryUpdateFinish, "包更新完成是否触发应当与isBinary一致");
+            Assert.AreNotEqual(isBinary, isPatchUpdateStart, "补丁包更新开始事件是否触发应当与isBinary相反");
+            Assert.AreNotEqual(isBinary, isPatchUpdateFinish, "补丁包更新完成事件是否触发应当与isBinary相反");
+            Assert.AreEqual(isBinary, isBinaryUpdateStart, "安装包更新开始是否触发应当与isBinary一致");
+            Assert.AreEqual(isBinary, isBinaryUpdateFinish, "安装包更新完成是否触发应当与isBinary一致");
             if (!isBinary)
             {
-                Assert.IsTrue(isPatchExtractStart, "补丁提取开始事件应当被触发");
-                Assert.IsTrue(isPatchExtractUpdate, "补丁提取更新事件应当被触发");
-                Assert.IsTrue(isPatchExtractSucceed, "补丁提取成功事件应当被触发");
-                Assert.IsFalse(isPatchExtractFailed, "补丁提取失败事件应当不被触发");
-                Assert.IsTrue(isPatchValidateStart, "补丁校验开始事件应当被触发");
-                Assert.IsTrue(isPatchValidateUpdate, "补丁校验更新事件应当被触发");
-                Assert.IsTrue(isPatchValidateSucceed, "补丁校验成功事件应当被触发");
-                Assert.IsFalse(isPatchValidateFailed, "补丁校验失败事件应当不被触发");
-                Assert.IsTrue(isPatchDownloadStart, "补丁下载开始事件应当被触发");
-                Assert.IsTrue(isPatchDownloadUpdate, "补丁下载更新事件应当被触发");
-                Assert.IsTrue(isPatchDownloadSucceed, "补丁下载成功事件应当被触发");
-                Assert.IsFalse(isPatchDownloadFailed, "补丁下载失败事件应当不被触发");
+                Assert.IsTrue(isPatchExtractStart, "补丁包提取开始事件应当被触发");
+                Assert.IsTrue(isPatchExtractUpdate, "补丁包提取更新事件应当被触发");
+                Assert.IsTrue(isPatchExtractSucceed, "补丁包提取成功事件应当被触发");
+                Assert.IsFalse(isPatchExtractFailed, "补丁包提取失败事件应当不被触发");
+                Assert.IsTrue(isPatchValidateStart, "补丁包校验开始事件应当被触发");
+                Assert.IsTrue(isPatchValidateUpdate, "补丁包校验更新事件应当被触发");
+                Assert.IsTrue(isPatchValidateSucceed, "补丁包校验成功事件应当被触发");
+                Assert.IsFalse(isPatchValidateFailed, "补丁包校验失败事件应当不被触发");
+                Assert.IsTrue(isPatchDownloadStart, "补丁包下载开始事件应当被触发");
+                Assert.IsTrue(isPatchDownloadUpdate, "补丁包下载更新事件应当被触发");
+                Assert.IsTrue(isPatchDownloadSucceed, "补丁包下载成功事件应当被触发");
+                Assert.IsFalse(isPatchDownloadFailed, "补丁包下载失败事件应当不被触发");
             }
         }
     }

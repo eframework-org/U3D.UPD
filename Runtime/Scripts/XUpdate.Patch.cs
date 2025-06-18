@@ -74,7 +74,7 @@ namespace EFramework.Update
         /// </code>
         /// 更多信息请参考模块文档。
         /// </remarks>
-        public class Patch
+        public class Patch : IWorker
         {
             /// <summary>
             /// 补丁处理阶段枚举。
@@ -204,7 +204,7 @@ namespace EFramework.Update
             }
 
             /// <summary>
-            /// 错误信息。
+            /// Error 表示错误的信息。
             /// </summary>
             public virtual string Error { get; set; }
 
@@ -224,9 +224,8 @@ namespace EFramework.Update
             /// <summary>
             /// 预处理补丁，提取内置补丁包、读取清单和校验文件。
             /// </summary>
-            /// <param name="remote">是否进行远端比较</param>
             /// <returns>返回一个协程</returns>
-            public virtual IEnumerator Preprocess(bool remote)
+            public virtual IEnumerator Preprocess()
             {
                 Error = string.Empty;
                 LocalMani = new XMani.Manifest(localUrl);
@@ -241,7 +240,7 @@ namespace EFramework.Update
                     }
                 }
 
-                if (remote == false)
+                if (string.IsNullOrEmpty(remoteUrl))
                 {
                     if (string.IsNullOrEmpty(LocalMani.Error) == false) // 如果不对比远端，且本地文件异常，则中断流程
                     {

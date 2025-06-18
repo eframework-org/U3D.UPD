@@ -34,7 +34,7 @@ namespace EFramework.Update
     ///     public List&lt;XUpdate.Patch&gt; Patches =&gt; patches;
     ///     
     ///     // 检查更新
-    ///     public bool OnCheck(out string version, out bool binary, out bool patch)
+    ///     public bool OnCheck(out bool binary, out bool patch)
     ///     {
     ///         // 实现版本检查逻辑，例如：
     ///         version = "1.0.0";
@@ -44,19 +44,19 @@ namespace EFramework.Update
     ///         // 如果需要更新补丁包，初始化补丁包处理器
     ///         if (patch)
     ///         {
-    ///             var patcher = new XUpdate.Patch(
+    ///             var worker = new XUpdate.Patch(
     ///                 "StreamingAssets/Patch.zip",  // 内置地址
     ///                 "Local/Patch/Manifest.db",              // 本地地址
     ///                 "https://example.com/Patch/Manifest.db"  // 远端地址
     ///             );
-    ///             patches.Add(patcher);
+    ///             patches.Add(worker);
     ///         }
     ///         
     ///         return binary || patch;  // 返回是否需要更新
     ///     }
     ///     
     ///     // 处理重试逻辑
-    ///     public bool OnRetry(XUpdate.Phase phase, XUpdate.Patch patcher, int count, out float wait)
+    ///     public bool OnRetry(XUpdate.Phase phase, XUpdate.IWorker worker, int count, out float wait)
     ///     {
     ///         // 实现重试逻辑，例如：
     ///         wait = 1.0f;  // 重试等待时间（秒）
@@ -115,7 +115,7 @@ namespace EFramework.Update
     public partial class XUpdate
     {
         /// <summary>
-        /// 更新处理阶段枚举。
+        /// Phase 是更新处理阶段的枚举类型。
         /// </summary>
         public enum Phase
         {
@@ -136,38 +136,66 @@ namespace EFramework.Update
         }
 
         /// <summary>
-        /// 更新处理程序接口，定义了更新过程中需要实现的功能。
+        /// IWorker 是更新流程的业务主体，分阶段实现了具体的更新流程。
+        /// </summary>
+        public interface IWorker
+        {
+            /// <summary>
+            /// Error 表示错误的信息。
+            /// </summary>
+            string Error { get; set; }
+
+            /// <summary>
+            /// Preprocess 是流程的预处理函数。
+            /// </summary>
+            /// <returns></returns>
+            IEnumerator Preprocess();
+
+            /// <summary>
+            /// Process 是流程的处理函数。
+            /// </summary>
+            /// <returns></returns>
+            IEnumerator Process();
+
+            /// <summary>
+            /// Postprocess 是流程的后处理函数。
+            /// </summary>
+            /// <returns></returns>
+            IEnumerator Postprocess();
+        }
+
+        /// <summary>
+        /// IHandler 是更新处理程序接口，定义了更新过程中需要实现的功能。
         /// </summary>
         public interface IHandler
         {
             /// <summary>
-            /// 获取二进制更新处理器。
+            /// Binary 用于获取安装包更新处理器。
             /// </summary>
             Binary Binary { get; }
 
             /// <summary>
-            /// 获取补丁更新处理器列表。
+            /// Patches 用于获取补丁包更新处理器列表。
             /// </summary>
             List<Patch> Patches { get; }
 
             /// <summary>
-            /// 检查更新的版本和状态。
+            /// OnCheck 检查更新的状态。
             /// </summary>
-            /// <param name="version">输出版本信息</param>
             /// <param name="binary">输出是否进行安装包更新</param>
             /// <param name="patch">输出是否进行补丁包更新</param>
             /// <returns>返回是否需要更新</returns>
-            bool OnCheck(out string version, out bool binary, out bool patch);
+            bool OnCheck(out bool binary, out bool patch);
 
             /// <summary>
             /// 处理更新失败时的重试逻辑。
             /// </summary>
             /// <param name="phase">当前处理阶段</param>
-            /// <param name="patcher">当前补丁处理器</param>
+            /// <param name="worker">当前更新处理器</param>
             /// <param name="count">已重试次数</param>
             /// <param name="wait">输出重试等待时间（秒）</param>
             /// <returns>返回是否继续重试</returns>
-            bool OnRetry(Phase phase, Patch patcher, int count, out float wait);
+            bool OnRetry(Phase phase, IWorker worker, int count, out float wait);
         }
 
         /// <summary>
@@ -342,13 +370,74 @@ namespace EFramework.Update
             if (handler == null) throw new ArgumentNullException("handler");
             Event.Notify(EventType.OnUpdateStart);
 
-            if (handler.OnCheck(out string version, out var binary, out var patch))
+            if (handler.OnCheck(out var binary, out var patch))
             {
                 XLog.Notice("XUpdate.Process: start to process update binary: {0}, patch: {1}.", binary, patch);
                 if (binary)
                 {
                     Event.Notify(EventType.OnBinaryUpdateStart);
-                    // TODO
+
+                    if (handler.Binary == null)
+                    {
+                        XLog.Warn("XUpdate.Process: no binary worker was found for updating.");
+                    }
+                    else
+                    {
+                        #region Preprocess
+                        {
+                            var succeeded = false;
+                            var executeCount = 0;
+                            while (!succeeded)
+                            {
+                                yield return handler.Binary.Preprocess();
+                                executeCount++;
+                                if (!string.IsNullOrEmpty(handler.Binary.Error))
+                                {
+                                    if (handler.OnRetry(Phase.Preprocess, handler.Binary, executeCount, out var wait)) yield return new WaitForSeconds(wait);
+                                    else yield break;
+                                }
+                                else succeeded = true;
+                            }
+                        }
+                        #endregion
+
+                        #region Process
+                        {
+                            var succeeded = false;
+                            var executeCount = 0;
+                            while (!succeeded)
+                            {
+                                yield return handler.Binary.Process();
+                                executeCount++;
+                                if (!string.IsNullOrEmpty(handler.Binary.Error))
+                                {
+                                    if (handler.OnRetry(Phase.Process, handler.Binary, executeCount, out var wait)) yield return new WaitForSeconds(wait);
+                                    else yield break;
+                                }
+                                else succeeded = true;
+                            }
+                        }
+                        #endregion
+
+                        #region Postprocess
+                        {
+                            var succeeded = false;
+                            var executeCount = 0;
+                            while (!succeeded)
+                            {
+                                yield return handler.Binary.Postprocess();
+                                executeCount++;
+                                if (!string.IsNullOrEmpty(handler.Binary.Error))
+                                {
+                                    if (handler.OnRetry(Phase.Postprocess, handler.Binary, executeCount, out var wait)) yield return new WaitForSeconds(wait);
+                                    else yield break;
+                                }
+                                else succeeded = true;
+                            }
+                        }
+                        #endregion
+                    }
+
                     Event.Notify(EventType.OnBinaryUpdateFinish);
                     XLog.Notice("XUpdate.Process: process update binary finish.");
                 }
@@ -359,73 +448,79 @@ namespace EFramework.Update
                     {
                         Event.Notify(EventType.OnPatchUpdateFinish);
                         Event.Notify(EventType.OnUpdateFinish);
-                        XLog.Notice("XUpdate.Process: process update patch finish with no patcher.");
+                        XLog.Warn("XUpdate.Process: no patch worker was found for updating.");
                     }
                     else
                     {
                         #region Preprocess
-                        var executeCount = 0;
-                        Patch lpatcher = null;
-                        for (var i = 0; i < handler.Patches.Count;)
                         {
-                            var patcher = handler.Patches[i];
-                            if (lpatcher != patcher)
+                            var executeCount = 0;
+                            Patch lworker = null;
+                            for (var i = 0; i < handler.Patches.Count;)
                             {
-                                lpatcher = patcher;
-                                executeCount = 1;
+                                var worker = handler.Patches[i];
+                                if (lworker != worker)
+                                {
+                                    lworker = worker;
+                                    executeCount = 1;
+                                }
+                                else executeCount++;
+                                yield return worker.Preprocess();
+                                if (!string.IsNullOrEmpty(worker.Error))
+                                {
+                                    if (handler.OnRetry(Phase.Preprocess, worker, executeCount, out var wait)) yield return new WaitForSeconds(wait);
+                                    else yield break;
+                                }
+                                else i++;
                             }
-                            else executeCount++;
-                            yield return patcher.Preprocess(patch);
-                            if (string.IsNullOrEmpty(patcher.Error) == false)
-                            {
-                                if (handler.OnRetry(Phase.Preprocess, patcher, executeCount, out var wait)) yield return new WaitForSeconds(wait);
-                                else yield break;
-                            }
-                            else i++;
                         }
                         #endregion
 
                         #region Process
-                        executeCount = 0;
-                        lpatcher = null;
-                        for (var i = 0; i < handler.Patches.Count;)
                         {
-                            var patcher = handler.Patches[i];
-                            if (lpatcher != patcher)
+                            var executeCount = 0;
+                            Patch lworker = null;
+                            for (var i = 0; i < handler.Patches.Count;)
                             {
-                                lpatcher = patcher;
-                                executeCount = 1;
+                                var worker = handler.Patches[i];
+                                if (lworker != worker)
+                                {
+                                    lworker = worker;
+                                    executeCount = 1;
+                                }
+                                else executeCount++;
+                                yield return worker.Process();
+                                if (!string.IsNullOrEmpty(worker.Error))
+                                {
+                                    if (handler.OnRetry(Phase.Process, worker, executeCount, out var wait)) yield return new WaitForSeconds(wait);
+                                    else yield break;
+                                }
+                                else i++;
                             }
-                            else executeCount++;
-                            yield return patcher.Process();
-                            if (string.IsNullOrEmpty(patcher.Error) == false)
-                            {
-                                if (handler.OnRetry(Phase.Process, patcher, executeCount, out var wait)) yield return new WaitForSeconds(wait);
-                                else yield break;
-                            }
-                            else i++;
                         }
                         #endregion
 
                         #region Postprocess
-                        executeCount = 0;
-                        lpatcher = null;
-                        for (var i = 0; i < handler.Patches.Count;)
                         {
-                            var patcher = handler.Patches[i];
-                            if (lpatcher != patcher)
+                            var executeCount = 0;
+                            Patch lworker = null;
+                            for (var i = 0; i < handler.Patches.Count;)
                             {
-                                lpatcher = patcher;
-                                executeCount = 1;
+                                var worker = handler.Patches[i];
+                                if (lworker != worker)
+                                {
+                                    lworker = worker;
+                                    executeCount = 1;
+                                }
+                                else executeCount++;
+                                yield return worker.Postprocess();
+                                if (!string.IsNullOrEmpty(worker.Error))
+                                {
+                                    if (handler.OnRetry(Phase.Postprocess, worker, executeCount, out var wait)) yield return new WaitForSeconds(wait);
+                                    else yield break;
+                                }
+                                else i++;
                             }
-                            else executeCount++;
-                            yield return patcher.Postprocess();
-                            if (string.IsNullOrEmpty(patcher.Error) == false)
-                            {
-                                if (handler.OnRetry(Phase.Postprocess, patcher, executeCount, out var wait)) yield return new WaitForSeconds(wait);
-                                else yield break;
-                            }
-                            else i++;
                         }
                         #endregion
 

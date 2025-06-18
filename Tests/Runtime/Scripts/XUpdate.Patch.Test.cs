@@ -118,7 +118,7 @@ public class TestXUpdatePatch
 
             // 测试 Preprocess 方法
             LogAssert.Expect(LogType.Error, new Regex(@"XMani\.Manifest\.Read: load and parse failed with error: Non exist file .* for reading mainfest\."));
-            yield return patch.Preprocess(true);
+            yield return patch.Preprocess();
 
             // 验证清单文件是否被正确处理
             Assert.IsTrue(string.IsNullOrEmpty(patch.Error), "预处理不应该有错误");
