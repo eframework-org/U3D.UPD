@@ -226,7 +226,7 @@ namespace EFramework.Update
             /// <summary>
             /// 安装包文件下载成功。
             /// </summary>
-            OnBinaryDownloadSucceed,
+            OnBinaryDownloadSucceeded,
 
             /// <summary>
             /// 安装包文件下载失败。
@@ -246,7 +246,7 @@ namespace EFramework.Update
             /// <summary>
             /// 安装包文件提取成功。
             /// </summary>
-            OnBinaryExtractSucceed,
+            OnBinaryExtractSucceeded,
 
             /// <summary>
             /// 安装包文件提取失败。
@@ -266,7 +266,7 @@ namespace EFramework.Update
             /// <summary>
             /// 安装包文件安装成功。
             /// </summary>
-            OnBinaryInstallSucceed,
+            OnBinaryInstallSucceeded,
 
             /// <summary>
             /// 安装包文件安装失败。
@@ -296,7 +296,7 @@ namespace EFramework.Update
             /// <summary>
             /// 补丁包文件提取成功。
             /// </summary>
-            OnPatchExtractSucceed,
+            OnPatchExtractSucceeded,
 
             /// <summary>
             /// 补丁包文件提取失败。
@@ -316,7 +316,7 @@ namespace EFramework.Update
             /// <summary>
             /// 补丁包文件验证成功。
             /// </summary>
-            OnPatchValidateSucceed,
+            OnPatchValidateSucceeded,
 
             /// <summary>
             /// 补丁包文件验证失败。
@@ -336,7 +336,7 @@ namespace EFramework.Update
             /// <summary>
             /// 补丁包文件下载成功。
             /// </summary>
-            OnPatchDownloadSucceed,
+            OnPatchDownloadSucceeded,
 
             /// <summary>
             /// 补丁包文件下载失败。

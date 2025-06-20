@@ -116,7 +116,7 @@ public class TestXUpdateCore
         {
             XUpdate.Event.Notify(XUpdate.EventType.OnPatchExtractStart);
             XUpdate.Event.Notify(XUpdate.EventType.OnPatchExtractUpdate);
-            if (string.IsNullOrEmpty(Error)) XUpdate.Event.Notify(XUpdate.EventType.OnPatchExtractSucceed);
+            if (string.IsNullOrEmpty(Error)) XUpdate.Event.Notify(XUpdate.EventType.OnPatchExtractSucceeded);
             else XUpdate.Event.Notify(XUpdate.EventType.OnPatchExtractFailed);
             yield return null;
         }
@@ -125,7 +125,7 @@ public class TestXUpdateCore
         {
             XUpdate.Event.Notify(XUpdate.EventType.OnPatchValidateStart);
             XUpdate.Event.Notify(XUpdate.EventType.OnPatchValidateUpdate);
-            if (string.IsNullOrEmpty(Error)) XUpdate.Event.Notify(XUpdate.EventType.OnPatchValidateSucceed);
+            if (string.IsNullOrEmpty(Error)) XUpdate.Event.Notify(XUpdate.EventType.OnPatchValidateSucceeded);
             else XUpdate.Event.Notify(XUpdate.EventType.OnPatchValidateFailed);
             return () => true;
         }
@@ -134,7 +134,7 @@ public class TestXUpdateCore
         {
             XUpdate.Event.Notify(XUpdate.EventType.OnPatchDownloadStart);
             XUpdate.Event.Notify(XUpdate.EventType.OnPatchDownloadUpdate);
-            if (string.IsNullOrEmpty(Error)) XUpdate.Event.Notify(XUpdate.EventType.OnPatchDownloadSucceed);
+            if (string.IsNullOrEmpty(Error)) XUpdate.Event.Notify(XUpdate.EventType.OnPatchDownloadSucceeded);
             else XUpdate.Event.Notify(XUpdate.EventType.OnPatchDownloadFailed);
             yield return null;
         }
@@ -184,15 +184,15 @@ public class TestXUpdateCore
             var isBinaryUpdateFinish = false;
             var isPatchExtractStart = false;
             var isPatchExtractUpdate = false;
-            var isPatchExtractSucceed = false;
+            var isPatchExtractSucceeded = false;
             var isPatchExtractFailed = false;
             var isPatchValidateStart = false;
             var isPatchValidateUpdate = false;
-            var isPatchValidateSucceed = false;
+            var isPatchValidateSucceeded = false;
             var isPatchValidateFailed = false;
             var isPatchDownloadStart = false;
             var isPatchDownloadUpdate = false;
-            var isPatchDownloadSucceed = false;
+            var isPatchDownloadSucceeded = false;
             var isPatchDownloadFailed = false;
 
             var handler = new MyHandler();
@@ -207,15 +207,15 @@ public class TestXUpdateCore
             {
                 XUpdate.Event.Reg(XUpdate.EventType.OnPatchExtractStart, () => isPatchExtractStart = true);
                 XUpdate.Event.Reg(XUpdate.EventType.OnPatchExtractUpdate, () => isPatchExtractUpdate = true);
-                XUpdate.Event.Reg(XUpdate.EventType.OnPatchExtractSucceed, () => isPatchExtractSucceed = true);
+                XUpdate.Event.Reg(XUpdate.EventType.OnPatchExtractSucceeded, () => isPatchExtractSucceeded = true);
                 XUpdate.Event.Reg(XUpdate.EventType.OnPatchExtractFailed, () => isPatchExtractFailed = true);
                 XUpdate.Event.Reg(XUpdate.EventType.OnPatchValidateStart, () => isPatchValidateStart = true);
                 XUpdate.Event.Reg(XUpdate.EventType.OnPatchValidateUpdate, () => isPatchValidateUpdate = true);
-                XUpdate.Event.Reg(XUpdate.EventType.OnPatchValidateSucceed, () => isPatchValidateSucceed = true);
+                XUpdate.Event.Reg(XUpdate.EventType.OnPatchValidateSucceeded, () => isPatchValidateSucceeded = true);
                 XUpdate.Event.Reg(XUpdate.EventType.OnPatchValidateFailed, () => isPatchValidateFailed = true);
                 XUpdate.Event.Reg(XUpdate.EventType.OnPatchDownloadStart, () => isPatchDownloadStart = true);
                 XUpdate.Event.Reg(XUpdate.EventType.OnPatchDownloadUpdate, () => isPatchDownloadUpdate = true);
-                XUpdate.Event.Reg(XUpdate.EventType.OnPatchDownloadSucceed, () => isPatchDownloadSucceed = true);
+                XUpdate.Event.Reg(XUpdate.EventType.OnPatchDownloadSucceeded, () => isPatchDownloadSucceeded = true);
                 XUpdate.Event.Reg(XUpdate.EventType.OnPatchDownloadFailed, () => isPatchDownloadFailed = true);
                 LogAssert.Expect(LogType.Log, "MyPatch.Cleanup Success");
             }
@@ -232,15 +232,15 @@ public class TestXUpdateCore
             {
                 Assert.IsTrue(isPatchExtractStart, "补丁包提取开始事件应当被触发");
                 Assert.IsTrue(isPatchExtractUpdate, "补丁包提取更新事件应当被触发");
-                Assert.IsTrue(isPatchExtractSucceed, "补丁包提取成功事件应当被触发");
+                Assert.IsTrue(isPatchExtractSucceeded, "补丁包提取成功事件应当被触发");
                 Assert.IsFalse(isPatchExtractFailed, "补丁包提取失败事件应当不被触发");
                 Assert.IsTrue(isPatchValidateStart, "补丁包校验开始事件应当被触发");
                 Assert.IsTrue(isPatchValidateUpdate, "补丁包校验更新事件应当被触发");
-                Assert.IsTrue(isPatchValidateSucceed, "补丁包校验成功事件应当被触发");
+                Assert.IsTrue(isPatchValidateSucceeded, "补丁包校验成功事件应当被触发");
                 Assert.IsFalse(isPatchValidateFailed, "补丁包校验失败事件应当不被触发");
                 Assert.IsTrue(isPatchDownloadStart, "补丁包下载开始事件应当被触发");
                 Assert.IsTrue(isPatchDownloadUpdate, "补丁包下载更新事件应当被触发");
-                Assert.IsTrue(isPatchDownloadSucceed, "补丁包下载成功事件应当被触发");
+                Assert.IsTrue(isPatchDownloadSucceeded, "补丁包下载成功事件应当被触发");
                 Assert.IsFalse(isPatchDownloadFailed, "补丁包下载失败事件应当不被触发");
             }
         }

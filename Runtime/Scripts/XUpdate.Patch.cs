@@ -339,7 +339,7 @@ namespace EFramework.Update
                         Event.Notify(EventType.OnPatchExtractUpdate, this);
                     }
 
-                    Event.Notify(EventType.OnPatchExtractSucceed, this);
+                    Event.Notify(EventType.OnPatchExtractSucceeded, this);
                     XLog.Notice("XUpdate.Patch.Extract: finsh to extract, elapsed: {0}ms.", XTime.GetMillisecond() - time);
                 }
                 else
@@ -434,9 +434,7 @@ namespace EFramework.Update
                                         {
                                             n--;
                                             int k = rnd.Next(n + 1);
-                                            var value = worker[k];
-                                            worker[k] = worker[n];
-                                            worker[n] = value;
+                                            (worker[n], worker[k]) = (worker[k], worker[n]);
                                         }
 
                                         //long fsize = 0; // for debug
@@ -539,7 +537,7 @@ namespace EFramework.Update
                             Event.Notify(EventType.OnPatchValidateUpdate, this);
                         }
 
-                        Event.Notify(EventType.OnPatchValidateSucceed, this);
+                        Event.Notify(EventType.OnPatchValidateSucceeded, this);
                         XLog.Notice("XUpdate.Patch.Validate: validated {0} local file(s)' {1} md5(s) by {2} task(s), elapsed: {3}ms.", total, md5s.Count, tasks, XTime.GetMillisecond() - time);
                     }
                     else
@@ -711,7 +709,7 @@ namespace EFramework.Update
                     }
 
                     XFile.SaveText(localUrl, RemoteMani.ToString());
-                    Event.Notify(EventType.OnPatchDownloadSucceed, this);
+                    Event.Notify(EventType.OnPatchDownloadSucceeded, this);
                     XLog.Notice("XUpdate.Patch.Download: download {0} file(s) done, elapsed: {1}.", total, stime);
                 }
                 else
