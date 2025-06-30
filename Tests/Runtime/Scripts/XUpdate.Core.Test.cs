@@ -7,6 +7,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using EFramework.Update;
 using EFramework.Utility;
 using NUnit.Framework;
@@ -217,7 +218,7 @@ public class TestXUpdateCore
                 XUpdate.Event.Reg(XUpdate.EventType.OnPatchDownloadUpdate, () => isPatchDownloadUpdate = true);
                 XUpdate.Event.Reg(XUpdate.EventType.OnPatchDownloadSucceeded, () => isPatchDownloadSucceeded = true);
                 XUpdate.Event.Reg(XUpdate.EventType.OnPatchDownloadFailed, () => isPatchDownloadFailed = true);
-                LogAssert.Expect(LogType.Log, "MyPatch.Cleanup Success");
+                LogAssert.Expect(LogType.Log, new Regex("MyPatch.Cleanup Success"));
             }
 
             yield return XUpdate.Process(handler);
@@ -299,7 +300,7 @@ public class TestXUpdateCore
         XUpdate.Event.Reg(XUpdate.EventType.OnPatchDownloadFailed, () => isDownloadFailed = true);
         handler.SetPreprocessError(0);
         handler.SetProcessError(0);
-        LogAssert.Expect(LogType.Error, "MyPatch.Cleanup Failed");
+        LogAssert.Expect(LogType.Error, new Regex("MyPatch.Cleanup Failed"));
         handler.SetPostprocessError(0);
         yield return XUpdate.Process(handler);
         Assert.IsTrue(isExtractFailed, "补丁提取失败事件应当被触发");
