@@ -77,38 +77,38 @@ namespace EFramework.Update
         public class Patch : IWorker
         {
             /// <summary>
-            /// 补丁处理阶段枚举。
+            /// Phase 是补丁处理阶段的枚举。
             /// </summary>
             public enum Phase
             {
                 /// <summary>
-                /// 提取阶段，从资源包中提取补丁文件。
+                /// Extract 是提取阶段，从资源包中提取补丁文件。
                 /// </summary>
                 Extract,
 
                 /// <summary>
-                /// 校验阶段，校验本地文件的完整性。
+                /// Validate 是校验阶段，校验本地文件的完整性。
                 /// </summary>
                 Validate,
 
                 /// <summary>
-                /// 下载阶段，从远端服务器下载补丁文件。
+                /// Download 是下载阶段，从远端服务器下载补丁文件。
                 /// </summary>
                 Download,
             }
 
             /// <summary>
-            /// 内置地址。
+            /// assetUrl 是内置补丁的地址。
             /// </summary>
             protected string assetUrl;
 
             /// <summary>
-            /// 本地地址。
+            /// localUrl 是本地补丁的地址。
             /// </summary>
             protected string localUrl;
 
             /// <summary>
-            /// 远端地址。
+            /// remoteUrl 是远端补丁的地址。
             /// </summary>
             protected string remoteUrl;
 
@@ -118,71 +118,71 @@ namespace EFramework.Update
             public XMani.Manifest LocalMani;
 
             /// <summary>
-            /// 远端清单，用于记录远端文件信息。
+            /// RemoteMani 是远端的补丁清单，用于记录远端文件信息。
             /// </summary>
             public XMani.Manifest RemoteMani;
 
             /// <summary>
-            /// 差异信息，记录本地和远端文件的差异。
+            /// DiffInfo 是差异信息，记录本地和远端文件的差异。
             /// </summary>
             public XMani.DiffInfo DiffInfo;
 
             /// <summary>
-            /// 待下载文件列表。
+            /// downloads 是待下载的文件列表。
             /// </summary>
             protected List<XMani.FileInfo> downloads;
 
             /// <summary>
-            /// 各阶段的文件大小记录。
+            /// sizes 记录了各阶段的文件大小。
             /// </summary>
             protected readonly Dictionary<Phase, long> sizes = new();
 
             /// <summary>
-            /// 获取指定阶段的文件总大小。
+            /// Size 获取指定阶段的文件总大小。
             /// </summary>
             /// <param name="phase">处理阶段</param>
             /// <returns>返回指定阶段的文件总大小（字节）</returns>
             public virtual long Size(Phase phase) { sizes.TryGetValue(phase, out var size); return size; }
 
             /// <summary>
-            /// 各阶段的处理进度记录。
+            /// progresses 记录了各阶段的处理进度。
             /// </summary>
             protected readonly Dictionary<Phase, float> progresses = new();
 
             /// <summary>
-            /// 获取指定阶段的处理进度。
+            /// Progress 获取指定阶段的处理进度。
             /// </summary>
             /// <param name="phase">处理阶段</param>
             /// <returns>返回指定阶段的处理进度（0-1）</returns>
             public virtual float Progress(Phase phase) { progresses.TryGetValue(phase, out var progress); return progress; }
 
             /// <summary>
-            /// 进度更新周期（秒）。
+            /// UpdatePeriod 是进度的更新频率，单位：秒。
             /// </summary>
             protected const float UpdatePeriod = 0.5f;
 
             /// <summary>
-            /// 速度更新周期（秒）。
+            /// SpeedPeriod 是速度的更新频率，单位：秒。
             /// </summary>
             protected const float SpeedPeriod = 0.5f;
 
             /// <summary>
-            /// 各阶段的速度计算时间记录。
+            /// speedTimes 记录了各阶段的速度计算时间。
             /// </summary>
             protected readonly Dictionary<Phase, float> speedTimes = new();
 
             /// <summary>
-            /// 各阶段的上次处理大小记录。
+            /// lastSizes 记录了各阶段的上次处理大小。
             /// </summary>
             protected readonly Dictionary<Phase, long> lastSizes = new();
 
             /// <summary>
-            /// 各阶段的处理速度记录。
+            /// speeds 记录了各阶段的处理速度。
             /// </summary>
             protected readonly Dictionary<Phase, long> speeds = new();
 
             /// <summary>
-            /// 获取指定阶段的处理速度。
+            /// Speed 获取指定阶段的处理速度。
             /// </summary>
             /// <param name="phase">处理阶段</param>
             /// <returns>返回指定阶段的处理速度（字节/秒）</returns>
@@ -222,7 +222,7 @@ namespace EFramework.Update
             }
 
             /// <summary>
-            /// 预处理补丁，提取内置补丁包、读取清单和校验文件。
+            /// Preprocess 预处理补丁，提取内置补丁包、读取清单和校验文件。
             /// </summary>
             /// <returns>返回一个协程</returns>
             public virtual IEnumerator Preprocess()
@@ -230,19 +230,19 @@ namespace EFramework.Update
                 Error = string.Empty;
                 LocalMani = new XMani.Manifest(localUrl);
                 yield return new WaitUntil(LocalMani.Read());
-                if (string.IsNullOrEmpty(LocalMani.Error) == false)
+                if (!string.IsNullOrEmpty(LocalMani.Error))
                 {
                     if (XFile.HasFile(assetUrl))
                     {
                         yield return Extract();
-                        if (string.IsNullOrEmpty(Error) == false) yield break;
+                        if (!string.IsNullOrEmpty(Error)) yield break;
                         yield return new WaitUntil(LocalMani.Read());
                     }
                 }
 
                 if (string.IsNullOrEmpty(remoteUrl))
                 {
-                    if (string.IsNullOrEmpty(LocalMani.Error) == false) // 如果不对比远端，且本地文件异常，则中断流程
+                    if (!string.IsNullOrEmpty(LocalMani.Error)) // 如果不对比远端，且本地文件异常，则中断流程
                     {
                         Error = LocalMani.Error;
                         yield break;
@@ -252,7 +252,7 @@ namespace EFramework.Update
                 {
                     RemoteMani = new XMani.Manifest(remoteUrl);
                     yield return new WaitUntil(RemoteMani.Read());
-                    if (string.IsNullOrEmpty(RemoteMani.Error) == false)
+                    if (!string.IsNullOrEmpty(RemoteMani.Error))
                     {
                         Error = RemoteMani.Error;
                         yield break;
@@ -260,7 +260,7 @@ namespace EFramework.Update
 
                     DiffInfo = LocalMani.Compare(RemoteMani);
                     yield return new WaitUntil(Validate());
-                    if (string.IsNullOrEmpty(Error) == false) yield break;
+                    if (!string.IsNullOrEmpty(Error)) yield break;
 
                     if (DiffInfo.Added.Count > 0 || DiffInfo.Modified.Count > 0)
                     {
@@ -272,7 +272,7 @@ namespace EFramework.Update
             }
 
             /// <summary>
-            /// 处理补丁，主要是下载新增和修改的文件。
+            /// Process 处理补丁，主要是下载新增和修改的文件。
             /// </summary>
             /// <returns>返回一个协程</returns>
             public virtual IEnumerator Process()
@@ -282,7 +282,7 @@ namespace EFramework.Update
             }
 
             /// <summary>
-            /// 后处理补丁，主要是清理已删除的文件。
+            /// Postprocess 后处理补丁，主要是清理已删除的文件。
             /// </summary>
             /// <returns>返回一个协程</returns>
             public virtual IEnumerator Postprocess()
@@ -292,7 +292,7 @@ namespace EFramework.Update
             }
 
             /// <summary>
-            /// 提取补丁，从内置补丁包中提取补丁文件。
+            /// Extract 提取补丁，从内置补丁包中提取补丁文件。
             /// </summary>
             /// <returns>返回一个协程</returns>
             protected virtual IEnumerator Extract()
@@ -307,7 +307,7 @@ namespace EFramework.Update
                 {
                     var localRoot = Path.GetDirectoryName(localUrl);
                     XLog.Notice("XUpdate.Patch.Extract: start to extract <a href=\"file:///{0}\">{1}</a> into <a href=\"file:///{2}\">{3}</a>.", Path.GetFullPath(assetUrl), assetUrl, Path.GetFullPath(localRoot), localRoot);
-                    if (XFile.HasDirectory(localRoot) == false) XFile.CreateDirectory(localRoot);
+                    if (!XFile.HasDirectory(localRoot)) XFile.CreateDirectory(localRoot);
                     Event.Notify(EventType.OnPatchExtractStart, this);
 
                     var ptime = 0f;
@@ -350,7 +350,7 @@ namespace EFramework.Update
             }
 
             /// <summary>
-            /// 校验补丁，校验本地文件的完整性。
+            /// Validate 校验补丁，校验本地文件的完整性。
             /// </summary>
             /// <returns>返回一个校验函数</returns>
             protected virtual Func<bool> Validate()
@@ -371,7 +371,7 @@ namespace EFramework.Update
                 var md5s = new Dictionary<string, string>();
                 try
                 {
-                    if (XFile.HasDirectory(localRoot) == false) XLog.Notice("XUpdate.Patch.Validate: <a href=\"file:///{0}\">{1}</a> doesn't exist.", Path.GetFullPath(localRoot), localRoot);
+                    if (!XFile.HasDirectory(localRoot)) XLog.Notice("XUpdate.Patch.Validate: <a href=\"file:///{0}\">{1}</a> doesn't exist.", Path.GetFullPath(localRoot), localRoot);
                     else
                     {
                         var files = Directory.GetFiles(localRoot).ToList();
@@ -452,7 +452,6 @@ namespace EFramework.Update
                                         {
                                             foreach (var kvp in tmps) md5s[kvp.Key] = kvp.Value;
                                             dones.Add(true);
-                                            //XLog.Info("Patcher.Validate: worker-{0} process {1} byte(s) of {2} file(s), elapsed {2}ms", num, fsize, worker.Count, XTime.GetMillisecond() - wtime);
                                         }
                                     });
                                 }
@@ -492,7 +491,7 @@ namespace EFramework.Update
                             if (md5s.TryGetValue(fi.Name, out var md5) && md5 == fi.MD5)
                             {
                                 DiffInfo.Added.RemoveAt(i);
-                                XLog.Info("XUpdate.Patch.Validate: local file's md5 equals to remote: {0}", fi.Name);
+                                XLog.Info("XUpdate.Patch.Validate: local file's md5 equals to remote: {0}.", fi.Name);
                             }
                         }
                         for (var i = DiffInfo.Modified.Count - 1; i >= 0; i--)
@@ -501,7 +500,7 @@ namespace EFramework.Update
                             if (md5s.TryGetValue(fi.Name, out var md5) && md5 == fi.MD5)
                             {
                                 DiffInfo.Modified.RemoveAt(i);
-                                XLog.Info("XUpdate.Patch.Validate: local file's md5 equals to remote: {0}", fi.Name);
+                                XLog.Info("XUpdate.Patch.Validate: local file's md5 equals to remote: {0}.", fi.Name);
                             }
                         }
                         foreach (var fi in LocalMani.Files)
@@ -512,14 +511,14 @@ namespace EFramework.Update
                             {
                                 if (dfi.Name == fi.Name) { delete = true; break; } // 忽略即将删除的文件
                             }
-                            if (delete == false && md5 != fi.MD5) // 本地文件不存在
+                            if (!delete && md5 != fi.MD5) // 本地文件不存在
                             {
                                 foreach (var rfi in RemoteMani.Files)
                                 {
                                     if (rfi.Name == fi.Name) // 远端存在该文件
                                     {
                                         DiffInfo.Added.Add(rfi);
-                                        XLog.Notice("XUpdate.Patch.Validate: local file's md5 doesn't equals to manifest: {0}", rfi.Name);
+                                        XLog.Notice("XUpdate.Patch.Validate: local file's md5 doesn't equals to manifest: {0}.", rfi.Name);
                                         break;
                                     }
                                 }
@@ -550,7 +549,7 @@ namespace EFramework.Update
             }
 
             /// <summary>
-            /// 下载补丁，从远端服务器下载补丁文件。
+            /// Download 下载补丁，从远端服务器下载补丁文件。
             /// </summary>
             /// <returns>返回一个协程</returns>
             protected virtual IEnumerator Download()
@@ -576,7 +575,7 @@ namespace EFramework.Update
                     if (progress > nprogress)
                     {
                         progresses[Phase.Download] = nprogress;
-                        XLog.Notice("XUpdate.Patch.Download: revert progress from {0} to {1}", progress, nprogress);
+                        XLog.Notice("XUpdate.Patch.Download: revert progress from {0} to {1}.", progress, nprogress);
                         Event.Notify(EventType.OnPatchDownloadUpdate, this);
                     }
                 }
@@ -603,7 +602,7 @@ namespace EFramework.Update
                             {
                                 if (!string.IsNullOrEmpty(req.error))
                                 {
-                                    if (string.IsNullOrEmpty(Error) == false) Error += "\n";
+                                    if (!string.IsNullOrEmpty(Error)) Error += "\n";
                                     Error += $"Download {req.uri} error: {req.error}";
                                 }
                                 else
@@ -682,7 +681,7 @@ namespace EFramework.Update
                     }
                     finally
                     {
-                        if (string.IsNullOrEmpty(Error) == false)
+                        if (!string.IsNullOrEmpty(Error))
                         {
                             if (reqs.Count > 0) // 释放资源
                             {
@@ -720,7 +719,7 @@ namespace EFramework.Update
             }
 
             /// <summary>
-            /// 清理补丁，删除已标记为删除的文件。
+            /// Cleanup 清理补丁，删除已标记为删除的文件。
             /// </summary>
             /// <returns>返回一个清理函数</returns>
             protected virtual Func<bool> Cleanup()
@@ -752,7 +751,7 @@ namespace EFramework.Update
                     finally { done = true; }
 
                     if (string.IsNullOrEmpty(Error)) XLog.Notice("XUpdate.Patch.Cleanup: finsh to cleanup deleted file(s).");
-                    else XLog.Error("XUpdate.Patch.Cleanup: finsh to cleanup deleted file(s) with error: {0}", Error);
+                    else XLog.Error("XUpdate.Patch.Cleanup: finsh to cleanup deleted file(s) with error: {0}.", Error);
                 });
 
                 return new Func<bool>(() => done);
