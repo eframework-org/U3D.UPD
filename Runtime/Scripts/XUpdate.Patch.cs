@@ -600,23 +600,22 @@ namespace EFramework.Update
                                 {
                                     succeeded.Add(fi); // 先移除 req，避免重复调用
                                     var data = req.downloadHandler.data; // 持有数据的引用，避免多线程访问异常
+                                    csize += fi.Size;
+                                    tsize += fi.Size;
+                                    var file = Path.Join(localRoot, fi.Name);
+                                    if (XLog.Able(XLog.LevelType.Info))
+                                    {
+                                        var ttime = XTime.GetMillisecond() - times[fi];
+                                        var etime = ttime < 0 ? "NaN" : (ttime < 1000 ? $"{ttime}ms" : (ttime < 60000 ? $"{ttime / 1000.0:0.00}s" : $"{Math.Floor(ttime / 60000.0)}min {ttime % 60000 / 1000}s"));
+                                        var dsize = data.Length;
+                                        var ssize = dsize < 1024 * 1024 ? $"{dsize / 1024}kb" : $"{dsize / (1024 * 1024f):0.00}mb";
+                                        XLog.Info("XUpdate.Patch.Download: download {0} into {1}, elapsed {2}.", ssize, fi.Name, etime);
+                                    }
 
                                     ThreadPool.QueueUserWorkItem((_) =>  // SaveFile 高耗时，异步避免 ANR，网络及文件大小等因素会产生一定的负载均衡效果，这里就不再进行负载策略了
                                     {
-                                        Interlocked.Increment(ref done); // 原子自增
-                                        csize += fi.Size;
-                                        tsize += fi.Size;
-                                        var file = Path.Join(localRoot, fi.Name);
                                         XFile.SaveFile(file, data);
-                                        var ttime = XTime.GetMillisecond() - times[fi];
-                                        times.Remove(fi);
-                                        if (XLog.Able(XLog.LevelType.Info))
-                                        {
-                                            var etime = ttime < 0 ? "NaN" : (ttime < 1000 ? $"{ttime}ms" : (ttime < 60000 ? $"{ttime / 1000.0:0.00}s" : $"{Math.Floor(ttime / 60000.0)}min {ttime % 60000 / 1000}s"));
-                                            var dsize = data.Length;
-                                            var ssize = dsize < 1024 * 1024 ? $"{dsize / 1024}kb" : $"{dsize / (1024 * 1024f):0.00}mb";
-                                            XLog.Info("XUpdate.Patch.Download: download {0} into {1}, elapsed {2}.", ssize, fi.Name, etime);
-                                        }
+                                        Interlocked.Increment(ref done); // 原子自增
                                     });
                                 }
                             }
@@ -643,6 +642,7 @@ namespace EFramework.Update
                             {
                                 var req = reqs[key];
                                 reqs.Remove(key);
+                                times.Remove(key);
                                 try { req.Dispose(); } catch (Exception e) { XLog.Panic(e); }
                             }
                         }
