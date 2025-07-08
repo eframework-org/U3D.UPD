@@ -5,13 +5,13 @@
 #if UNITY_INCLUDE_TESTS
 using System.IO;
 using System.Collections;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
+using UnityEngine;
 using UnityEngine.TestTools;
 using EFramework.Utility;
-using static EFramework.Update.XUpdate;
-using UnityEngine;
-using System.Text.RegularExpressions;
 using EFramework.Editor;
+using static EFramework.Update.XUpdate;
 
 public class TestXUpdatePatch
 {
@@ -38,7 +38,7 @@ public class TestXUpdatePatch
             speeds.TryGetValue(phase, out var speed);
             speedTimes.TryGetValue(phase, out var time);
             var deltaTime = CurrentTime - time;
-            if (deltaTime > SpeedPeriod)
+            if (deltaTime > 0.5f)
             {
                 speedTimes[phase] = CurrentTime;
                 lastSizes.TryGetValue(phase, out var last);
@@ -86,9 +86,12 @@ public class TestXUpdatePatch
             for (int i = 50; i < 150; i++) // 索引从50-150开始，确保有50个删除，50个添加，50个修改文件
             {
                 var content = $"test-remote-{i}";
-                var file = XFile.PathJoin(remoteDir, $"file{i}.txt@{content.MD5()}");
+                var file = XFile.PathJoin(remoteDir, $"file{i}.txt");
                 XFile.SaveText(file, content);
-                remoteManifest.Files.Add(new XMani.FileInfo { Name = $"file{i}.txt", MD5 = content.MD5(), Size = content.Length });
+                var fileMd5 = XFile.FileMD5(file);
+                File.Move(file, $"{file}@{fileMd5}");
+
+                remoteManifest.Files.Add(new XMani.FileInfo { Name = $"file{i}.txt", MD5 = fileMd5, Size = content.Length });
             }
             XFile.SaveText(remoteManifest.Uri, remoteManifest.ToString());
 
@@ -124,9 +127,9 @@ public class TestXUpdatePatch
             Assert.IsTrue(string.IsNullOrEmpty(patch.Error), "预处理不应该有错误");
             Assert.IsNotNull(patch.LocalMani, "本地清单应该被初始化");
             Assert.IsNotNull(patch.RemoteMani, "远程清单应该被初始化");
-            Assert.IsTrue(patch.DiffInfo.Added.Count == 50, "差异信息应该包含50个已添加的文件");
-            Assert.IsTrue(patch.DiffInfo.Deleted.Count == 50, "差异信息应该包含50个已删除的文件");
-            Assert.IsTrue(patch.DiffInfo.Modified.Count == 50, "差异信息应该包含50个已修改的文件");
+            Assert.IsTrue(patch.DiffInfo.Added.Count == 50, "差异信息应该包含 50 个已添加的文件");
+            Assert.IsTrue(patch.DiffInfo.Deleted.Count == 50, "差异信息应该包含 50 个已删除的文件");
+            Assert.IsTrue(patch.DiffInfo.Modified.Count == 50, "差异信息应该包含 50 个已修改的文件");
 
             // 测试 Process 方法
             yield return patch.Process();
@@ -136,9 +139,9 @@ public class TestXUpdatePatch
             {
                 var path = XFile.PathJoin(localDir, file.Name);
                 Assert.IsTrue(XFile.HasFile(path), "文件应当存在于本地：" + file.Name);
-                Assert.IsTrue(XFile.FileMD5(path) == file.MD5, "文件应当与远程文件一致：" + file.Name);
+                Assert.AreEqual(XFile.FileMD5(path), file.MD5, "文件应当与远程文件一致：" + file.Name);
             }
-            Assert.IsTrue(patch.RemoteMani.Files.Count + 1 == Directory.GetFiles(localDir).Length, "本地文件数量应当等于远程文件数量加1");
+            Assert.IsTrue(patch.RemoteMani.Files.Count + 1 == Directory.GetFiles(localDir).Length, "本地文件数量应当等于远程文件数量加 1");
         }
         finally
         {
@@ -153,9 +156,9 @@ public class TestXUpdatePatch
         }
     }
 
-    [TestCase(1.0f, 0.8f, 1000, 1024, 1024, "当时间间隔小于SpeedPeriod时应返回当前记录的速度值")]
-    [TestCase(2.0f, 1.0f, 1000, 1024, 4000, "当时间间隔大于SpeedPeriod时应计算新速度")]
-    [TestCase(3.0f, 2.0f, 0, 0, 0, "当上次大小为0时应返回0")]
+    [TestCase(1.0f, 0.8f, 1000, 1024, 1024, "当时间间隔小于 0.5f 时应返回当前记录的速度值")]
+    [TestCase(2.0f, 1.0f, 1000, 1024, 4000, "当时间间隔大于 0.5f 时应计算新速度")]
+    [TestCase(3.0f, 2.0f, 0, 0, 0, "当上次大小为 0 时应返回 0 ")]
     [TestCase(4.0f, 6000, 10000, 1024, 1024, "当前大小小于上次大小时应保持当前速度不变")]
     public void Speed(float currentTime, float speedTime, long lastSize, long speed, float expected, string _)
     {

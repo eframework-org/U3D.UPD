@@ -56,10 +56,10 @@ namespace EFramework.Update
     ///     }
     ///     
     ///     // 处理重试逻辑
-    ///     public bool OnRetry(XUpdate.Phase phase, XUpdate.IWorker worker, int count, out float wait)
+    ///     public bool OnRetry(XUpdate.Phase phase, XUpdate.IWorker worker, int count, out float pending)
     ///     {
     ///         // 实现重试逻辑，例如：
-    ///         wait = 1.0f;  // 重试等待时间（秒）
+    ///         pending = 1.0f;  // 重试等待时间（秒）
     ///         return count &lt; 3;  // 最多重试 3 次
     ///     }
     /// }
@@ -120,17 +120,17 @@ namespace EFramework.Update
         public enum Phase
         {
             /// <summary>
-            /// 预处理阶段，进行更新前的准备工作。
+            /// Preprocess 是预处理阶段，进行更新前的准备工作。
             /// </summary>
             Preprocess,
 
             /// <summary>
-            /// 处理阶段，执行实际的更新操作。
+            /// Process 是处理阶段，执行实际的更新操作。
             /// </summary>
             Process,
 
             /// <summary>
-            /// 后处理阶段，完成更新后的清理工作。
+            /// Postprocess 是后处理阶段，完成更新后的清理工作。
             /// </summary>
             Postprocess,
         }
@@ -188,179 +188,179 @@ namespace EFramework.Update
             bool OnCheck(out bool binary, out bool patch);
 
             /// <summary>
-            /// 处理更新失败时的重试逻辑。
+            /// OnRetry 处理更新失败时的重试逻辑。
             /// </summary>
             /// <param name="phase">当前处理阶段</param>
             /// <param name="worker">当前更新处理器</param>
             /// <param name="count">已重试次数</param>
-            /// <param name="wait">输出重试等待时间（秒）</param>
+            /// <param name="pending">输出重试等待时间（秒）</param>
             /// <returns>返回是否继续重试</returns>
-            bool OnRetry(Phase phase, IWorker worker, int count, out float wait);
+            bool OnRetry(Phase phase, IWorker worker, int count, out float pending);
         }
 
         /// <summary>
-        /// 更新事件类型枚举，定义了更新过程中的所有事件。
+        /// EventType 是内置的事件类型枚举，定义了更新过程中的所有事件。
         /// </summary>
         public enum EventType
         {
             /// <summary>
-            /// 更新流程开始。
+            /// OnUpdateStart 表示更新流程开始。
             /// </summary>
             OnUpdateStart,
 
             /// <summary>
-            /// 安装包更新流程开始。
+            /// OnBinaryUpdateStart 表示安装包更新流程开始。
             /// </summary>
             OnBinaryUpdateStart,
 
             /// <summary>
-            /// 安装包文件下载开始。
+            /// OnBinaryDownloadStart 表示安装包文件下载开始。
             /// </summary>
             OnBinaryDownloadStart,
 
             /// <summary>
-            /// 安装包文件下载进度更新。
+            /// OnBinaryDownloadUpdate 表示安装包文件下载进度更新。
             /// </summary>
             OnBinaryDownloadUpdate,
 
             /// <summary>
-            /// 安装包文件下载成功。
+            /// OnBinaryDownloadSucceeded 表示安装包文件下载成功。
             /// </summary>
             OnBinaryDownloadSucceeded,
 
             /// <summary>
-            /// 安装包文件下载失败。
+            /// OnBinaryDownloadFailed 表示安装包文件下载失败。
             /// </summary>
             OnBinaryDownloadFailed,
 
             /// <summary>
-            /// 安装包文件提取开始。
+            /// OnBinaryExtractStart 表示安装包文件提取开始。
             /// </summary>
             OnBinaryExtractStart,
 
             /// <summary>
-            /// 安装包文件提取进度更新。
+            /// OnBinaryExtractUpdate 表示安装包文件提取进度更新。
             /// </summary>
             OnBinaryExtractUpdate,
 
             /// <summary>
-            /// 安装包文件提取成功。
+            /// OnBinaryExtractSucceeded 表示安装包文件提取成功。
             /// </summary>
             OnBinaryExtractSucceeded,
 
             /// <summary>
-            /// 安装包文件提取失败。
+            /// OnBinaryExtractFailed 表示安装包文件提取失败。
             /// </summary>
             OnBinaryExtractFailed,
 
             /// <summary>
-            /// 安装包文件安装开始。
+            /// OnBinaryInstallStart 表示安装包文件安装开始。
             /// </summary>
             OnBinaryInstallStart,
 
             /// <summary>
-            /// 安装包文件安装进度更新。
+            /// OnBinaryInstallUpdate 表示安装包文件安装进度更新。
             /// </summary>
             OnBinaryInstallUpdate,
 
             /// <summary>
-            /// 安装包文件安装成功。
+            /// OnBinaryInstallSucceeded 表示安装包文件安装成功。
             /// </summary>
             OnBinaryInstallSucceeded,
 
             /// <summary>
-            /// 安装包文件安装失败。
+            /// OnBinaryInstallFailed 表示安装包文件安装失败。
             /// </summary>
             OnBinaryInstallFailed,
 
             /// <summary>
-            /// 安装包更新流程完成。
+            /// OnBinaryUpdateFinish 表示安装包更新流程完成。
             /// </summary>
             OnBinaryUpdateFinish,
 
             /// <summary>
-            /// 补丁包更新流程开始。
+            /// OnPatchUpdateStart 表示补丁包更新流程开始。
             /// </summary>
             OnPatchUpdateStart,
 
             /// <summary>
-            /// 补丁包文件提取开始。
+            /// OnPatchExtractStart 表示补丁包文件提取开始。
             /// </summary>
             OnPatchExtractStart,
 
             /// <summary>
-            /// 补丁包文件提取进度更新。
+            /// OnPatchExtractUpdate 表示补丁包文件提取进度更新。
             /// </summary>
             OnPatchExtractUpdate,
 
             /// <summary>
-            /// 补丁包文件提取成功。
+            /// OnPatchExtractSucceeded 表示补丁包文件提取成功。
             /// </summary>
             OnPatchExtractSucceeded,
 
             /// <summary>
-            /// 补丁包文件提取失败。
+            /// OnPatchExtractFailed 表示补丁包文件提取失败。
             /// </summary>
             OnPatchExtractFailed,
 
             /// <summary>
-            /// 补丁包文件验证开始。
+            /// OnPatchValidateStart 表示补丁包文件验证开始。
             /// </summary>
             OnPatchValidateStart,
 
             /// <summary>
-            /// 补丁包文件验证进度更新。
+            /// OnPatchValidateUpdate 表示补丁包文件验证进度更新。
             /// </summary>
             OnPatchValidateUpdate,
 
             /// <summary>
-            /// 补丁包文件验证成功。
+            /// OnPatchValidateSucceeded 表示补丁包文件验证成功。
             /// </summary>
             OnPatchValidateSucceeded,
 
             /// <summary>
-            /// 补丁包文件验证失败。
+            /// OnPatchValidateFailed 表示补丁包文件验证失败。
             /// </summary>
             OnPatchValidateFailed,
 
             /// <summary>
-            /// 补丁包文件下载开始。
+            /// OnPatchDownloadStart 表示补丁包文件下载开始。
             /// </summary>
             OnPatchDownloadStart,
 
             /// <summary>
-            /// 补丁包文件下载进度更新。
+            /// OnPatchDownloadUpdate 表示补丁包文件下载进度更新。
             /// </summary>
             OnPatchDownloadUpdate,
 
             /// <summary>
-            /// 补丁包文件下载成功。
+            /// OnPatchDownloadSucceeded 表示补丁包文件下载成功。
             /// </summary>
             OnPatchDownloadSucceeded,
 
             /// <summary>
-            /// 补丁包文件下载失败。
+            /// OnPatchDownloadFailed 表示补丁包文件下载失败。
             /// </summary>
             OnPatchDownloadFailed,
 
             /// <summary>
-            /// 补丁包更新流程完成。
+            /// OnPatchUpdateFinish 表示补丁包更新流程完成。
             /// </summary>
             OnPatchUpdateFinish,
 
             /// <summary>
-            /// 更新流程完成。
+            /// OnUpdateFinish 表示更新流程完成。
             /// </summary>
             OnUpdateFinish,
         }
 
         /// <summary>
-        /// 事件管理器实例，用于处理更新过程中的事件通知。
+        /// Event 是事件管理器实例，用于处理更新过程中的事件通知。
         /// </summary>
         public static readonly XEvent.Manager Event = new();
 
         /// <summary>
-        /// 处理更新的主方法，协调整个更新流程的执行。
+        /// Process 处理更新的主方法，协调整个更新流程的执行。
         /// </summary>
         /// <param name="handler">更新处理程序实例</param>
         /// <returns>返回一个协程</returns>
@@ -393,7 +393,7 @@ namespace EFramework.Update
                                 executeCount++;
                                 if (!string.IsNullOrEmpty(handler.Binary.Error))
                                 {
-                                    if (handler.OnRetry(Phase.Preprocess, handler.Binary, executeCount, out var wait)) yield return new WaitForSeconds(wait);
+                                    if (handler.OnRetry(Phase.Preprocess, handler.Binary, executeCount, out var pending)) yield return new WaitForSeconds(pending);
                                     else yield break;
                                 }
                                 else succeeded = true;
@@ -411,7 +411,7 @@ namespace EFramework.Update
                                 executeCount++;
                                 if (!string.IsNullOrEmpty(handler.Binary.Error))
                                 {
-                                    if (handler.OnRetry(Phase.Process, handler.Binary, executeCount, out var wait)) yield return new WaitForSeconds(wait);
+                                    if (handler.OnRetry(Phase.Process, handler.Binary, executeCount, out var pending)) yield return new WaitForSeconds(pending);
                                     else yield break;
                                 }
                                 else succeeded = true;
@@ -429,7 +429,7 @@ namespace EFramework.Update
                                 executeCount++;
                                 if (!string.IsNullOrEmpty(handler.Binary.Error))
                                 {
-                                    if (handler.OnRetry(Phase.Postprocess, handler.Binary, executeCount, out var wait)) yield return new WaitForSeconds(wait);
+                                    if (handler.OnRetry(Phase.Postprocess, handler.Binary, executeCount, out var pending)) yield return new WaitForSeconds(pending);
                                     else yield break;
                                 }
                                 else succeeded = true;
@@ -468,7 +468,7 @@ namespace EFramework.Update
                                 yield return worker.Preprocess();
                                 if (!string.IsNullOrEmpty(worker.Error))
                                 {
-                                    if (handler.OnRetry(Phase.Preprocess, worker, executeCount, out var wait)) yield return new WaitForSeconds(wait);
+                                    if (handler.OnRetry(Phase.Preprocess, worker, executeCount, out var pending)) yield return new WaitForSeconds(pending);
                                     else yield break;
                                 }
                                 else i++;
@@ -492,7 +492,7 @@ namespace EFramework.Update
                                 yield return worker.Process();
                                 if (!string.IsNullOrEmpty(worker.Error))
                                 {
-                                    if (handler.OnRetry(Phase.Process, worker, executeCount, out var wait)) yield return new WaitForSeconds(wait);
+                                    if (handler.OnRetry(Phase.Process, worker, executeCount, out var pending)) yield return new WaitForSeconds(pending);
                                     else yield break;
                                 }
                                 else i++;
@@ -516,7 +516,7 @@ namespace EFramework.Update
                                 yield return worker.Postprocess();
                                 if (!string.IsNullOrEmpty(worker.Error))
                                 {
-                                    if (handler.OnRetry(Phase.Postprocess, worker, executeCount, out var wait)) yield return new WaitForSeconds(wait);
+                                    if (handler.OnRetry(Phase.Postprocess, worker, executeCount, out var pending)) yield return new WaitForSeconds(pending);
                                     else yield break;
                                 }
                                 else i++;

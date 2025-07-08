@@ -157,16 +157,6 @@ namespace EFramework.Update
             public virtual float Progress(Phase phase) { progresses.TryGetValue(phase, out var progress); return progress; }
 
             /// <summary>
-            /// UpdatePeriod 是进度的更新频率，单位：秒。
-            /// </summary>
-            protected const float UpdatePeriod = 0.5f;
-
-            /// <summary>
-            /// SpeedPeriod 是速度的更新频率，单位：秒。
-            /// </summary>
-            protected const float SpeedPeriod = 0.5f;
-
-            /// <summary>
             /// speedTimes 记录了各阶段的速度计算时间。
             /// </summary>
             protected readonly Dictionary<Phase, float> speedTimes = new();
@@ -190,10 +180,11 @@ namespace EFramework.Update
             {
                 speeds.TryGetValue(phase, out var speed);
                 speedTimes.TryGetValue(phase, out var time);
-                var deltaTime = Time.realtimeSinceStartup - time;
-                if (deltaTime > SpeedPeriod)
+                var currentTime = Time.realtimeSinceStartup;
+                var deltaTime = currentTime - time;
+                if (deltaTime > 0.5f) // 设置适当地采样周期以计算速度，避免速度值跳跃
                 {
-                    speedTimes[phase] = Time.realtimeSinceStartup;
+                    speedTimes[phase] = currentTime;
                     lastSizes.TryGetValue(phase, out var last);
                     var current = (long)(Size(phase) * Progress(phase));
                     if (last > 0 && current > last) speed = (long)((current - last) / deltaTime);
@@ -306,11 +297,11 @@ namespace EFramework.Update
                 try
                 {
                     var localRoot = Path.GetDirectoryName(localUrl);
-                    XLog.Notice("XUpdate.Patch.Extract: start to extract <a href=\"file:///{0}\">{1}</a> into <a href=\"file:///{2}\">{3}</a>.", Path.GetFullPath(assetUrl), assetUrl, Path.GetFullPath(localRoot), localRoot);
+                    XLog.Info("XUpdate.Patch.Extract: start to extract <a href=\"file:///{0}\">{1}</a> into <a href=\"file:///{2}\">{3}</a>.", Path.GetFullPath(assetUrl), assetUrl, Path.GetFullPath(localRoot), localRoot);
                     if (!XFile.HasDirectory(localRoot)) XFile.CreateDirectory(localRoot);
                     Event.Notify(EventType.OnPatchExtractStart, this);
 
-                    var ptime = 0f;
+                    var lprogress = 0f;
                     XFile.Unzip(assetUrl, localRoot, () => done = true, (err) =>
                     {
                         XLog.Error("XUpdate.Patch.Extract: extract with error: {0}.", err);
@@ -320,9 +311,9 @@ namespace EFramework.Update
                     {
                         if (done) return; // 避免解压完成后再次回调，导致事件时序异常
                         progresses[Phase.Extract] = progress;
-                        if (Time.realtimeSinceStartup - ptime > UpdatePeriod || progress >= 1f) // 避免频繁回调（解压的回调频次不高，也可以不作处理）
+                        if (lprogress != progress) // 避免频繁回调（解压的回调频次不高，也可以不作处理）
                         {
-                            ptime = Time.realtimeSinceStartup;
+                            lprogress = progress;
                             Event.Notify(EventType.OnPatchExtractUpdate, this);
                         }
                     }));
@@ -340,7 +331,7 @@ namespace EFramework.Update
                     }
 
                     Event.Notify(EventType.OnPatchExtractSucceeded, this);
-                    XLog.Notice("XUpdate.Patch.Extract: finsh to extract, elapsed: {0}ms.", XTime.GetMillisecond() - time);
+                    XLog.Info("XUpdate.Patch.Extract: finsh to extract, elapsed: {0}ms.", XTime.GetMillisecond() - time);
                 }
                 else
                 {
@@ -360,9 +351,8 @@ namespace EFramework.Update
 
                 var localRoot = Path.GetDirectoryName(localUrl);
 
-                XLog.Notice("XUpdate.Patch.Validate: start to validate <a href=\"file:///{0}\">{1}</a>.", Path.GetFullPath(localRoot), localRoot);
+                XLog.Info("XUpdate.Patch.Validate: start to validate <a href=\"file:///{0}\">{1}</a>.", Path.GetFullPath(localRoot), localRoot);
 
-                var ptime = 0f;
                 long current = 0;
                 long record = 0;
                 long total = 0;
@@ -371,7 +361,7 @@ namespace EFramework.Update
                 var md5s = new Dictionary<string, string>();
                 try
                 {
-                    if (!XFile.HasDirectory(localRoot)) XLog.Notice("XUpdate.Patch.Validate: <a href=\"file:///{0}\">{1}</a> doesn't exist.", Path.GetFullPath(localRoot), localRoot);
+                    if (!XFile.HasDirectory(localRoot)) XLog.Info("XUpdate.Patch.Validate: <a href=\"file:///{0}\">{1}</a> doesn't exist.", Path.GetFullPath(localRoot), localRoot);
                     else
                     {
                         var files = Directory.GetFiles(localRoot).ToList();
@@ -379,8 +369,8 @@ namespace EFramework.Update
                         sizes[Phase.Validate] = total;
                         if (files.Count > 0)
                         {
-                            var thread = 20; // 过多线程无益，资源竞态效应（可以根据不同的平台设置不同的值，如Windows/Android/iOS）
-                            var avg = files.Count / thread;
+                            var threadCount = Math.Max(2, SystemInfo.processorCount / 4); // 过多线程无益，资源竞态效应（可以根据不同的平台设置不同的值，如Windows/Android/iOS）
+                            var avg = files.Count / threadCount;
                             var last = avg <= 1 ? files.Count : files.Count % avg;
                             tasks = avg <= 1 ? 1 : files.Count / avg;
                             ThreadPool.QueueUserWorkItem((_) => // 避免从主线程衍生过多子线程引起的卡顿
@@ -415,7 +405,7 @@ namespace EFramework.Update
                                     var s2 = getFileSize(e2);
                                     return s2.CompareTo(s1);
                                 });
-                                XLog.Notice("XUpdate.Patch.Validate: sort {0} local file(s), elapsed: {1}ms.", total, XTime.GetMillisecond() - stime);
+                                XLog.Info("XUpdate.Patch.Validate: sort {0} local file(s), elapsed: {1}ms.", total, XTime.GetMillisecond() - stime);
 
                                 var workers = new List<List<string>>();
                                 for (var i = 0; i < tasks; i++) workers.Add(new List<string>());
@@ -425,7 +415,7 @@ namespace EFramework.Update
                                 {
                                     var num = i;
                                     var worker = workers[i];
-                                    ThreadPool.QueueUserWorkItem((_) =>  // FileMD5高耗时，异步避免ANR，多线程提高对比速度
+                                    ThreadPool.QueueUserWorkItem((_) =>  // FileMD5 高耗时，异步避免 ANR，多线程提高对比速度
                                     {
                                         // 大小文件交错，各线程错峰执行
                                         var rnd = new System.Random();
@@ -467,6 +457,7 @@ namespace EFramework.Update
 
                 Event.Notify(EventType.OnPatchValidateStart, this);
 
+                var lprogress = 0f;
                 return new Func<bool>(() =>
                 {
                     if (total > 0 && record != current)
@@ -475,9 +466,9 @@ namespace EFramework.Update
                         var progress = current * 1f / total;
                         progresses[Phase.Validate] = progress;
 
-                        if (Time.realtimeSinceStartup - ptime > UpdatePeriod || progress >= 1f) // 避免频繁回调
+                        if (lprogress != progress) // 避免频繁回调
                         {
-                            ptime = Time.realtimeSinceStartup;
+                            lprogress = progress;
                             Event.Notify(EventType.OnPatchValidateUpdate, this);
                         }
                     }
@@ -518,7 +509,7 @@ namespace EFramework.Update
                                     if (rfi.Name == fi.Name) // 远端存在该文件
                                     {
                                         DiffInfo.Added.Add(rfi);
-                                        XLog.Notice("XUpdate.Patch.Validate: local file's md5 doesn't equals to manifest: {0}.", rfi.Name);
+                                        XLog.Info("XUpdate.Patch.Validate: local file's md5 doesn't equals to manifest: {0}.", rfi.Name);
                                         break;
                                     }
                                 }
@@ -537,7 +528,7 @@ namespace EFramework.Update
                         }
 
                         Event.Notify(EventType.OnPatchValidateSucceeded, this);
-                        XLog.Notice("XUpdate.Patch.Validate: validated {0} local file(s)' {1} md5(s) by {2} task(s), elapsed: {3}ms.", total, md5s.Count, tasks, XTime.GetMillisecond() - time);
+                        XLog.Info("XUpdate.Patch.Validate: validated {0} local file(s)' {1} md5(s) by {2} task(s), elapsed: {3}ms.", total, md5s.Count, tasks, XTime.GetMillisecond() - time);
                     }
                     else
                     {
@@ -555,12 +546,12 @@ namespace EFramework.Update
             protected virtual IEnumerator Download()
             {
                 Error = string.Empty;
-                var thread = 5; // 过多协程无益，考虑文件大小、网络带宽、内存溢出等因素
+                var threadCount = Math.Max(2, SystemInfo.processorCount / 4); // 需要考虑文件大小、网络带宽、内存溢出等因素
 
                 var time = XTime.GetTimestamp();
                 var localRoot = Path.GetDirectoryName(localUrl);
                 var remoteRoot = remoteUrl.Replace(Path.GetFileName(remoteUrl), "");
-                XLog.Notice("XUpdate.Patch.Download: start to download from <a href=\"{0}\">{1}</a> into <a href=\"file:///{2}\">{3}</a>.", remoteRoot, remoteRoot, Path.GetFullPath(localRoot), localRoot);
+                XLog.Info("XUpdate.Patch.Download: start to download from <a href=\"{0}\">{1}</a> into <a href=\"file:///{2}\">{3}</a>.", remoteRoot, remoteRoot, Path.GetFullPath(localRoot), localRoot);
                 if (!XFile.HasDirectory(localRoot)) XFile.CreateDirectory(localRoot);
 
                 Event.Notify(EventType.OnPatchDownloadStart, this);
@@ -575,7 +566,7 @@ namespace EFramework.Update
                     if (progress > nprogress)
                     {
                         progresses[Phase.Download] = nprogress;
-                        XLog.Notice("XUpdate.Patch.Download: revert progress from {0} to {1}.", progress, nprogress);
+                        XLog.Info("XUpdate.Patch.Download: revert progress from {0} to {1}.", progress, nprogress);
                         Event.Notify(EventType.OnPatchDownloadUpdate, this);
                     }
                 }
@@ -587,7 +578,7 @@ namespace EFramework.Update
                 var succeeded = new List<XMani.FileInfo>();
                 var csize = (long)(Size(Phase.Download) * Progress(Phase.Download));
                 var lsize = csize;
-                var ptime = 0f;
+                var lprogress = 0f;
                 while (done < total && string.IsNullOrEmpty(Error))
                 {
                     long tsize = csize;
@@ -607,21 +598,25 @@ namespace EFramework.Update
                                 }
                                 else
                                 {
-                                    done++;
-                                    succeeded.Add(fi);
-                                    csize += fi.Size;
-                                    tsize += fi.Size;
-                                    var file = Path.Join(localRoot, fi.Name);
-                                    XFile.SaveFile(file, req.downloadHandler.data);
-                                    if (XLog.Able(XLog.LevelType.Notice))
+                                    succeeded.Add(fi); // 先移除 req，避免重复调用
+                                    var data = req.downloadHandler.data; // 持有数据的引用，避免多线程访问异常
+
+                                    ThreadPool.QueueUserWorkItem((_) =>  // SaveFile 高耗时，异步避免 ANR，网络及文件大小等因素会产生一定的负载均衡效果，这里就不再进行负载策略了
                                     {
-                                        var ttime = XTime.GetMillisecond() - times[fi];
-                                        //var etime = ttime < 0 ? "NaN" : (ttime < 1000 ? $"{ttime}ms" : (ttime < 60000 ? $"{ttime / 60000}s" : $"{ttime / 60000}min {ttime % 60000}s"));
-                                        var etime = ttime < 0 ? "NaN" : (ttime < 1000 ? $"{ttime}ms" : (ttime < 60000 ? $"{ttime / 1000.0:0.00}s" : $"{Math.Floor(ttime / 60000.0)}min {ttime % 60000 / 1000}s"));
-                                        var dsize = req.downloadHandler.data.Length;
-                                        var ssize = dsize < 1024 * 1024 ? $"{dsize / 1024}kb" : $"{dsize / (1024 * 1024f):0.00}mb";
-                                        XLog.Notice("XUpdate.Patch.Download: download {0} into {1}, elapsed {2}.", ssize, fi.Name, etime);
-                                    }
+                                        Interlocked.Increment(ref done); // 原子自增
+                                        csize += fi.Size;
+                                        tsize += fi.Size;
+                                        var file = Path.Join(localRoot, fi.Name);
+                                        XFile.SaveFile(file, data);
+                                        if (XLog.Able(XLog.LevelType.Info))
+                                        {
+                                            var ttime = XTime.GetMillisecond() - times[fi];
+                                            var etime = ttime < 0 ? "NaN" : (ttime < 1000 ? $"{ttime}ms" : (ttime < 60000 ? $"{ttime / 1000.0:0.00}s" : $"{Math.Floor(ttime / 60000.0)}min {ttime % 60000 / 1000}s"));
+                                            var dsize = data.Length;
+                                            var ssize = dsize < 1024 * 1024 ? $"{dsize / 1024}kb" : $"{dsize / (1024 * 1024f):0.00}mb";
+                                            XLog.Info("XUpdate.Patch.Download: download {0} into {1}, elapsed {2}.", ssize, fi.Name, etime);
+                                        }
+                                    });
                                 }
                             }
                             else tsize += (long)(fi.Size * req.downloadProgress);
@@ -634,9 +629,9 @@ namespace EFramework.Update
                             var ttsize = Size(Phase.Download);
                             if (ttsize > 0) progress = tsize * 1f / ttsize;
                             progresses[Phase.Download] = progress;
-                            if (Time.realtimeSinceStartup - ptime > UpdatePeriod || progress >= 1f) // 避免频繁回调
+                            if (lprogress != progress) // 避免频繁回调
                             {
-                                ptime = Time.realtimeSinceStartup;
+                                lprogress = progress;
                                 Event.Notify(EventType.OnPatchDownloadUpdate, this);
                             }
                         }
@@ -654,7 +649,7 @@ namespace EFramework.Update
 
                         if (string.IsNullOrEmpty(Error))
                         {
-                            if (reqs.Count < thread && downloads.Count > 0)
+                            if (reqs.Count < threadCount && downloads.Count > 0)
                             {
                                 var rnd = new System.Random();
                                 var idx = rnd.Next(downloads.Count);
@@ -688,7 +683,7 @@ namespace EFramework.Update
                                 foreach (var kvp in reqs)
                                 {
                                     downloads.Add(kvp.Key); // 重新下载
-                                    XLog.Notice("XUpdate.Patch.Download: dispose request of <a href=\"{0}\">{1}</a>.", kvp.Value.uri, kvp.Value.uri);
+                                    XLog.Info("XUpdate.Patch.Download: dispose request of <a href=\"{0}\">{1}</a>.", kvp.Value.uri, kvp.Value.uri);
                                     try { kvp.Value.Dispose(); } catch (Exception e) { XLog.Panic(e); }
                                 }
                             }
@@ -709,7 +704,7 @@ namespace EFramework.Update
 
                     XFile.SaveText(localUrl, RemoteMani.ToString());
                     Event.Notify(EventType.OnPatchDownloadSucceeded, this);
-                    XLog.Notice("XUpdate.Patch.Download: download {0} file(s) done, elapsed: {1}.", total, stime);
+                    XLog.Info("XUpdate.Patch.Download: download {0} file(s) done, elapsed: {1}.", total, stime);
                 }
                 else
                 {
@@ -727,7 +722,7 @@ namespace EFramework.Update
                 Error = string.Empty;
 
                 var localRoot = Path.GetDirectoryName(localUrl);
-                XLog.Notice("XUpdate.Patch.Cleanup: start to cleanup deleted file(s) at <a href=\"file:///{0}\">{1}</a>.", Path.GetFullPath(localRoot), localRoot);
+                XLog.Info("XUpdate.Patch.Cleanup: start to cleanup deleted file(s) at <a href=\"file:///{0}\">{1}</a>.", Path.GetFullPath(localRoot), localRoot);
                 var done = false;
                 ThreadPool.QueueUserWorkItem((_) =>
                 {
@@ -738,7 +733,7 @@ namespace EFramework.Update
                             var fs = XFile.PathJoin(localRoot, fi.Name);
                             if (XFile.HasFile(fs))
                             {
-                                XLog.Notice("XUpdate.Patch.Cleanup: delete {0}.", fs);
+                                XLog.Info("XUpdate.Patch.Cleanup: delete {0}.", fs);
                                 XFile.DeleteFile(fs);
                             }
                         }
@@ -750,7 +745,7 @@ namespace EFramework.Update
                     }
                     finally { done = true; }
 
-                    if (string.IsNullOrEmpty(Error)) XLog.Notice("XUpdate.Patch.Cleanup: finsh to cleanup deleted file(s).");
+                    if (string.IsNullOrEmpty(Error)) XLog.Info("XUpdate.Patch.Cleanup: finsh to cleanup deleted file(s).");
                     else XLog.Error("XUpdate.Patch.Cleanup: finsh to cleanup deleted file(s) with error: {0}.", Error);
                 });
 

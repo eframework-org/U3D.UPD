@@ -51,10 +51,10 @@ public class MyHandler : XUpdate.IHandler
     }
     
     // 处理重试逻辑
-    public bool OnRetry(XUpdate.Phase phase, XUpdate.IWorker worker, int count, out float wait)
+    public bool OnRetry(XUpdate.Phase phase, XUpdate.IWorker worker, int count, out float pending)
     {
         // 实现重试逻辑，例如：
-        wait = 1.0f;  // 重试等待时间（秒）
+        pending = 1.0f;  // 重试等待时间（秒）
         return count < 3;  // 最多重试 3 次
     }
 }
