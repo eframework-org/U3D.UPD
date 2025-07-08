@@ -608,9 +608,10 @@ namespace EFramework.Update
                                         tsize += fi.Size;
                                         var file = Path.Join(localRoot, fi.Name);
                                         XFile.SaveFile(file, data);
+                                        var ttime = XTime.GetMillisecond() - times[fi];
+                                        times.Remove(fi);
                                         if (XLog.Able(XLog.LevelType.Info))
                                         {
-                                            var ttime = XTime.GetMillisecond() - times[fi];
                                             var etime = ttime < 0 ? "NaN" : (ttime < 1000 ? $"{ttime}ms" : (ttime < 60000 ? $"{ttime / 1000.0:0.00}s" : $"{Math.Floor(ttime / 60000.0)}min {ttime % 60000 / 1000}s"));
                                             var dsize = data.Length;
                                             var ssize = dsize < 1024 * 1024 ? $"{dsize / 1024}kb" : $"{dsize / (1024 * 1024f):0.00}mb";
@@ -642,7 +643,6 @@ namespace EFramework.Update
                             {
                                 var req = reqs[key];
                                 reqs.Remove(key);
-                                times.Remove(key);
                                 try { req.Dispose(); } catch (Exception e) { XLog.Panic(e); }
                             }
                         }
